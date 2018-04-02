@@ -1,35 +1,58 @@
 ﻿using System;
 using System.Collections;
-using System.Reflection;
 using UnityEngine;
 
 public class FaceDetector : MonoBehaviour {
+    /*AndroidJavaClass jc = new AndroidJavaClass("com.unity3d.player.UnityPlayer"); 
+AndroidJavaObject jo = jc.GetStatic<AndroidJavaObject>("currentActivity");*/
+
+    public Camera cam;
+    private Texture2D texture;
+    private int framec = 0;
+    private AndroidJavaObject context;
+    private AndroidJavaClass frameDist;
+    private RenderTexture rt;
+
     // Use this for initialization
     void Start() {
+        rt = new RenderTexture(Screen.width, Screen.height, 24);
+        cam.targetTexture = rt;
+        texture = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
         Debug.Log("starting detection");
-        StartCoroutine(Detect());
-    }
 
-    IEnumerator Detect() {
-        var asm = Assembly.LoadFile("/mnt/sdcard/plg/FaceRecognizerPlugin.dll");
-        var type = asm.GetType("FaceRecognizerPlugin.Class1");
-        var plugin = Activator.CreateInstance(type) as IPlugin;
-        if (plugin == null) throw new Exception("fucking plugin is null");
-        Debug.Log("plugin loaded!");
-        while (true) {
-            yield return new WaitForEndOfFrame();
-
-            // create a texture to pass to encoding
-            Texture2D texture = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
-
-            // put buffer into texture
-            texture.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
-            texture.Apply();
-            byte[] bytes = texture.EncodeToPNG();
-            Debug.Log(plugin.Start(texture.height, texture.width, bytes));
+        using (var jc = new AndroidJavaClass("com.unity3d.player.UnityPlayer")) {
+            context = jc.GetStatic<AndroidJavaObject>("currentActivity");
+            frameDist = new AndroidJavaClass("tr.edu.iyte.vrxd.unityhook.FrameDistributer");
+            frameDist.CallStatic("loadPlugins", context);
         }
     }
 
     // Update is called once per frame
-    void Update() { }
+    void Update() {
+        framec++;
+        if (framec % 20 == 0)
+            StartCoroutine(Detect());
+    }
+
+    IEnumerator Detect() {
+        var sw = new System.Diagnostics.Stopwatch();
+        sw.Start();
+        yield return new WaitForEndOfFrame();
+
+        cam.Render();
+        var temp = RenderTexture.active;
+        RenderTexture.active = rt;
+        // put buffer into texture
+        texture.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
+
+        RenderTexture.active = temp;
+        yield return null;
+
+        texture.Apply();
+
+        yield return null;
+
+        frameDist.CallStatic("distribute", texture.EncodeToPNG());
+        Debug.Log("elapsed: " + sw.ElapsedMilliseconds + "ms");
+    }
 }
