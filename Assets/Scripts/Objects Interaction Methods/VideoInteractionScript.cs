@@ -14,7 +14,10 @@ public class VideoInteractionScript : MonoBehaviour {
     // Use this for initialization
     void Start()
     {
-
+        if (MagnetButton == null)
+            MagnetButton = GameObject.FindGameObjectWithTag("MagnetButton");
+        if(VideoListMenu == null)
+            VideoListMenu = GameObject.FindGameObjectWithTag("VideoListMenu");
     }
 
     // Update is called once per frame

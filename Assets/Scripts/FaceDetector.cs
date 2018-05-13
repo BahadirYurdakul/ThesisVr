@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
@@ -11,6 +12,10 @@ public class FaceDetector : MonoBehaviour {
     private RenderTexture rt;
     private Rect rect;
     private Texture2D texture;
+    private List<FrameWithCameraAngleModel> frameWithCameraAngleList;
+    public GameObject mainCamera;
+    private GameObject locator;
+    private GameObject container;
     private bool anyOpenCvPlugins;
 
     private int w;
@@ -20,6 +25,17 @@ public class FaceDetector : MonoBehaviour {
 
     // Use this for initialization
     void Start() {
+        frameWithCameraAngleList = new List<FrameWithCameraAngleModel>();
+        if(mainCamera == null)
+            mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
+        locator = GameObject.FindGameObjectWithTag("VideoSpriteLocator");
+        container = GameObject.FindGameObjectWithTag("VideoSpriteContainer");
+
+        //test için
+        addRoundObjectToFace(344, 37, 0);  //344.45, 37.4103, 0
+        addRoundObjectToFace(0, 0, 0);  //344.45, 37.4103, 0
+        //test
+
         w = Screen.width / ResMult;
         h = Screen.height / ResMult;
         rt = new RenderTexture(w, h, 24);
@@ -37,6 +53,9 @@ public class FaceDetector : MonoBehaviour {
 
     // Update is called once per frame
     void Update() {
+        //Debug.Log("Cam angle is x: " + cam.transform.eulerAngles.x + "  y: " + cam.transform.eulerAngles.y + " z: " + cam.transform.eulerAngles.z);
+        //Debug.Log("Main camera angle is x: " + mainCamera.transform.eulerAngles.x + "  y: " + mainCamera.transform.eulerAngles.y + " z: " + mainCamera.transform.eulerAngles.z);
+
         framec++;
 
         int count = frameDist.CallStatic<int>("getFrameObj", framec / 30);
@@ -52,6 +71,12 @@ public class FaceDetector : MonoBehaviour {
 
         // Camera.main.transform.rotation
         // TODO ask for frame ready then collect and draw if any shapes
+    }
+
+    void OnDisable()
+    {
+        Debug.Log("Disabled....");
+        AddRemoveParentHelper.Instance.ClearGameObjectChildren(container);
     }
 
     IEnumerator Detect() {
@@ -83,6 +108,9 @@ public class FaceDetector : MonoBehaviour {
         yield return null;
 
         using (var mat = new AndroidJavaObject("org.opencv.core.MatOfByte", texture.EncodeToJPG(70))) {
+            var eulerAngles = mainCamera.transform.eulerAngles;
+            frameWithCameraAngleList.Add(new FrameWithCameraAngleModel(eulerAngles.x, eulerAngles.y, framec / 30));
+            Debug.Log("frame with camera: " + frameWithCameraAngleList[frameWithCameraAngleList.Count].ToString());
             frameDist.CallStatic("distribute", framec / 30, mat);
         }
 
@@ -92,5 +120,13 @@ public class FaceDetector : MonoBehaviour {
                   "elapsed read pixels: " + (ms3 - ms2) + "ms\n" +
                   "elapsed switch textures and apply: " + (ms4 - ms3) + "ms\n" +
                   "elapsed total: " + sw.ElapsedMilliseconds + "ms");
+    }
+
+    private void addRoundObjectToFace(float x, float y, float z)
+    {
+        var newRoundObject = AddRemoveParentHelper.Instance.InstantiatePrefab("FaceRoundPrefab", "newObject", locator);
+        locator.transform.Rotate(new Vector3(x, y, z));
+        AddRemoveParentHelper.Instance.SetParentObject(newRoundObject, container);
+        locator.transform.Rotate(new Vector3(-x, -y, -z));
     }
 }
