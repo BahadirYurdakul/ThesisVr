@@ -1,7 +1,7 @@
 ﻿
 public class FrameWithCameraAngleModel {
-    float x, y;
-    int frameCount;
+    public float x, y;
+    public int frameCount;
 
     public FrameWithCameraAngleModel(float x, float y, int frameCount)
     {
