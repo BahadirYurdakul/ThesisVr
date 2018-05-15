@@ -36,7 +36,7 @@ public class FaceDetector : MonoBehaviour {
         container = GameObject.FindGameObjectWithTag("VideoSpriteContainer");
 
         //test için
-        //addRoundObjectToFace(344, 37, 0); //344.45, 37.4103, 0
+        addRoundObjectToFace(344, 37, 0, 0, 0, 500, 300); //344.45, 37.4103, 0
         //addRoundObjectToFace(0, 0, 0); //344.45, 37.4103, 0
         //test
 
@@ -66,7 +66,13 @@ public class FaceDetector : MonoBehaviour {
         foreach (var frameWithCameraAngleModel in frameWithCameraAngleList) {
             string shape = frameDist.CallStatic<string>("getFrameShapes", frameId);
             // draw
-            Debug.Log("shape received: " + shape);
+            //Debug.Log("shape received: " + shape);
+            string[] tokens;
+            if (shape != null && !shape.Equals(""))
+            {
+                Debug.Log("shape received: " + shape);
+                tokens = shape.Split(',');
+            }
         }
 
         //Screen.dpi;
@@ -122,22 +128,36 @@ public class FaceDetector : MonoBehaviour {
         using (var mat = new AndroidJavaObject("org.opencv.core.MatOfByte", texture.EncodeToJPG(70))) {
             var eulerAngles = mainCamera.transform.eulerAngles;
             frameWithCameraAngleList.Add(new FrameWithCameraAngleModel(eulerAngles.x, eulerAngles.y, frameId));
-            //Debug.Log("frame with camera: " + frameWithCameraAngleList[frameWithCameraAngleList.Count].ToString());
             frameDist.CallStatic("distribute", frameId, mat);
         }
 
         yield return null;
+        
         Debug.Log("\nelapsed render camera: " + ms + "ms\n" +
                   "elapsed switch textures: " + (ms2 - ms) + "ms\n" +
                   "elapsed read pixels: " + (ms3 - ms2) + "ms\n" +
                   "elapsed switch textures and apply: " + (ms4 - ms3) + "ms\n" +
                   "elapsed total: " + sw.ElapsedMilliseconds + "ms");
+        
     }
 
-    private void addRoundObjectToFace(float x, float y, float z) {
+    private void addRoundObjectToFace(float rotationX, float rotationY, float rotationZ, float posX, float posY, float width, float height)
+    {
+        float normalizedPositionX = posX * 4 / Screen.width;
+        float normalizedPositionY = posY * 4 / Screen.height;
+        float normalizedWidth = width * 4 / Screen.width;
+        float normalizedHeight = height * 4 / Screen.height;
+        float normalizedScale = normalizedHeight > normalizedWidth ? normalizedHeight : normalizedWidth;
+
+        //Debug.Log("Screen:" + Screen.width + "  , " + Screen.height);
         var newRoundObject = AddRemoveParentHelper.Instance.InstantiatePrefab("FaceRoundPrefab", "newObject", locator);
-        locator.transform.Rotate(new Vector3(x, y, z));
+        locator.transform.Rotate(new Vector3(rotationX, rotationY, rotationZ));
+        normalizedPositionX += newRoundObject.transform.position.x;
+        normalizedPositionY += newRoundObject.transform.position.y;
+        Debug.Log("Pos x: " + newRoundObject.transform.position.x + ", Pos y: " + newRoundObject.transform.position.y);
+        newRoundObject.transform.position = new Vector3(normalizedPositionX, normalizedPositionY, newRoundObject.transform.position.z);
+        newRoundObject.transform.localScale = new Vector3(normalizedScale, normalizedScale, normalizedScale);
         AddRemoveParentHelper.Instance.SetParentObject(newRoundObject, container);
-        locator.transform.Rotate(new Vector3(-x, -y, -z));
+        locator.transform.Rotate(new Vector3(-rotationX, -rotationY, -rotationZ));
     }
 }
