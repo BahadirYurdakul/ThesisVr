@@ -16,6 +16,11 @@ public class FaceDetector : MonoBehaviour {
     public GameObject mainCamera;
     private GameObject locator;
     private GameObject container;
+    private bool anyOpenCvPlugins;
+
+    public GameObject g;
+
+    private List<FrameWithCameraAngleModel> l = new List<FrameWithCameraAngleModel>();
 
     private int w;
     private int h;
@@ -25,14 +30,14 @@ public class FaceDetector : MonoBehaviour {
     // Use this for initialization
     void Start() {
         frameWithCameraAngleList = new List<FrameWithCameraAngleModel>();
-        if(mainCamera == null)
+        if (mainCamera == null)
             mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
         locator = GameObject.FindGameObjectWithTag("VideoSpriteLocator");
         container = GameObject.FindGameObjectWithTag("VideoSpriteContainer");
 
         //test için
-        addRoundObjectToFace(344, 37, 0);  //344.45, 37.4103, 0
-        addRoundObjectToFace(0, 0, 0);  //344.45, 37.4103, 0
+        //addRoundObjectToFace(344, 37, 0); //344.45, 37.4103, 0
+        //addRoundObjectToFace(0, 0, 0); //344.45, 37.4103, 0
         //test
 
         w = Screen.width / ResMult;
@@ -46,7 +51,7 @@ public class FaceDetector : MonoBehaviour {
         using (var jc = new AndroidJavaClass("com.unity3d.player.UnityPlayer")) {
             context = jc.GetStatic<AndroidJavaObject>("currentActivity");
             frameDist = new AndroidJavaClass("tr.edu.iyte.vrxd.unityhook.FrameDistributer");
-            frameDist.CallStatic<bool>("loadPlugins", context);
+            anyOpenCvPlugins = frameDist.CallStatic<bool>("loadPlugins", context);
         }
     }
 
@@ -56,21 +61,29 @@ public class FaceDetector : MonoBehaviour {
         //Debug.Log("Main camera angle is x: " + mainCamera.transform.eulerAngles.x + "  y: " + mainCamera.transform.eulerAngles.y + " z: " + mainCamera.transform.eulerAngles.z);
 
         framec++;
+        int frameId = framec / 30;
+        
+        foreach (var frameWithCameraAngleModel in frameWithCameraAngleList) {
+            string shape = frameDist.CallStatic<string>("getFrameShapes", frameId);
+            // draw
+            Debug.Log("shape received: " + shape);
+        }
+
+        //Screen.dpi;
+
         if (framec % 30 == 0)
             // TODO record current camera angle and frameId
-            StartCoroutine(Detect());
+            StartCoroutine(Detect(frameId));
 
         // Camera.main.transform.rotation
-        // TODO ask for frame ready then collect and draw if any shapes
     }
 
-    void OnDisable()
-    {
+    void OnDisable() {
         Debug.Log("Disabled....");
         AddRemoveParentHelper.Instance.ClearGameObjectChildren(container);
     }
 
-    IEnumerator Detect() {
+    IEnumerator Detect(int frameId) {
         var sw = new System.Diagnostics.Stopwatch();
         sw.Start();
         yield return new WaitForEndOfFrame();
@@ -81,6 +94,14 @@ public class FaceDetector : MonoBehaviour {
 
         var temp = RenderTexture.active;
         RenderTexture.active = rt;
+
+        float nearPlane = cam.nearClipPlane;
+        /*var botLeft = cam.ViewportToWorldPoint(new Vector3(0, 0, nearPlane));
+        var topLeft = cam.ViewportToWorldPoint(new Vector3(0, 1, nearPlane));
+        var botRight = cam.ViewportToWorldPoint(new Vector3(1, 0, nearPlane));
+        var topRight = cam.ViewportToWorldPoint(new Vector3(1, 1, nearPlane));
+        Debug.Log("tl: " +topLeft + " bl: " + botLeft + " br: " + botRight + " tr: " + topRight);
+        Instantiate(g, )*/
 
         var ms2 = sw.ElapsedMilliseconds;
 
@@ -100,9 +121,9 @@ public class FaceDetector : MonoBehaviour {
 
         using (var mat = new AndroidJavaObject("org.opencv.core.MatOfByte", texture.EncodeToJPG(70))) {
             var eulerAngles = mainCamera.transform.eulerAngles;
-            frameWithCameraAngleList.Add(new FrameWithCameraAngleModel(eulerAngles.x, eulerAngles.y, framec / 30));
-            Debug.Log("frame with camera: " + frameWithCameraAngleList[frameWithCameraAngleList.Count].ToString());
-            frameDist.CallStatic("distribute", framec / 30, mat);
+            frameWithCameraAngleList.Add(new FrameWithCameraAngleModel(eulerAngles.x, eulerAngles.y, frameId));
+            //Debug.Log("frame with camera: " + frameWithCameraAngleList[frameWithCameraAngleList.Count].ToString());
+            frameDist.CallStatic("distribute", frameId, mat);
         }
 
         yield return null;
@@ -113,8 +134,7 @@ public class FaceDetector : MonoBehaviour {
                   "elapsed total: " + sw.ElapsedMilliseconds + "ms");
     }
 
-    private void addRoundObjectToFace(float x, float y, float z)
-    {
+    private void addRoundObjectToFace(float x, float y, float z) {
         var newRoundObject = AddRemoveParentHelper.Instance.InstantiatePrefab("FaceRoundPrefab", "newObject", locator);
         locator.transform.Rotate(new Vector3(x, y, z));
         AddRemoveParentHelper.Instance.SetParentObject(newRoundObject, container);
