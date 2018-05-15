@@ -14,7 +14,7 @@ public class FaceDetector : MonoBehaviour {
     private Texture2D texture;
     private List<FrameWithCameraAngleModel> frameWithCameraAngleList;
     public GameObject mainCamera;
-    public GameObject locator;
+    private GameObject locator;
     private GameObject container;
 
     private int w;
@@ -27,12 +27,12 @@ public class FaceDetector : MonoBehaviour {
         frameWithCameraAngleList = new List<FrameWithCameraAngleModel>();
         if(mainCamera == null)
             mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
-        locator = GameObject.FindGameObjectWithTag("locator");
+        locator = GameObject.FindGameObjectWithTag("VideoSpriteLocator");
         container = GameObject.FindGameObjectWithTag("VideoSpriteContainer");
 
         //test için
-        addRoundObjectToFace(344, 37, 0, 20, 20, 500, 300);  //344.45, 37.4103, 0
-        addRoundObjectToFace(0, 0, 0, 20, 20, 2560, 1440);  //344.45, 37.4103, 0
+        addRoundObjectToFace(344, 37, 0);  //344.45, 37.4103, 0
+        addRoundObjectToFace(0, 0, 0);  //344.45, 37.4103, 0
         //test
 
         w = Screen.width / ResMult;
@@ -66,7 +66,7 @@ public class FaceDetector : MonoBehaviour {
 
     void OnDisable()
     {
-        //Debug.Log("Disabled....");
+        Debug.Log("Disabled....");
         AddRemoveParentHelper.Instance.ClearGameObjectChildren(container);
     }
 
@@ -113,23 +113,11 @@ public class FaceDetector : MonoBehaviour {
                   "elapsed total: " + sw.ElapsedMilliseconds + "ms");
     }
 
-    private void addRoundObjectToFace(float rotationX, float rotationY, float rotationZ, float posX, float posY, float width, float height)
+    private void addRoundObjectToFace(float x, float y, float z)
     {
-        float normalizedPositionX = posX * 4 / Screen.width;
-        float normalizedPositionY = posY * 4 / Screen.height;
-        float normalizedWidth = width * 4 / Screen.width;
-        float normalizedHeight = height * 4 / Screen.height;
-        float normalizedScale = normalizedHeight > normalizedWidth ? normalizedHeight : normalizedWidth; 
-
-        //Debug.Log("Screen:" + Screen.width + "  , " + Screen.height);
         var newRoundObject = AddRemoveParentHelper.Instance.InstantiatePrefab("FaceRoundPrefab", "newObject", locator);
-        locator.transform.Rotate(new Vector3(rotationX, rotationY, rotationZ));
-        normalizedPositionX += newRoundObject.transform.position.x;
-        normalizedPositionY += newRoundObject.transform.position.y;
-        Debug.Log("Pos x: " + newRoundObject.transform.position.x+ ", Pos y: " + newRoundObject.transform.position.y);
-        newRoundObject.transform.position = new Vector3(normalizedPositionX, normalizedPositionY, newRoundObject.transform.position.z);
-        newRoundObject.transform.localScale = new Vector3(normalizedScale, normalizedScale, normalizedScale); 
+        locator.transform.Rotate(new Vector3(x, y, z));
         AddRemoveParentHelper.Instance.SetParentObject(newRoundObject, container);
-        locator.transform.Rotate(new Vector3(-rotationX, -rotationY, -rotationZ));
+        locator.transform.Rotate(new Vector3(-x, -y, -z));
     }
 }
