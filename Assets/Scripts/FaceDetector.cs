@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
@@ -34,7 +35,7 @@ public class FaceDetector : MonoBehaviour {
         container = GameObject.FindGameObjectWithTag("VideoSpriteContainer");
 
         //test için
-        addRoundObjectToFace(344, 37, 0, 0, 0, 500, 300); //344.45, 37.4103, 0
+        //addRoundObjectToFace(344, 37, 0, 0, 0, 500, 300); //344.45, 37.4103, 0
         //addRoundObjectToFace(0, 0, 0); //344.45, 37.4103, 0
         //test
 
@@ -62,7 +63,7 @@ public class FaceDetector : MonoBehaviour {
         var frameId = framec / 30;
 
         foreach (var model in frameWithCameraAngleList) {
-            var allPluginShapes = frameDist.CallStatic<string>("getFrameShapes", frameId);
+            var allPluginShapes = frameDist.CallStatic<string>("getFrameShapes", model.frameCount);
             if (allPluginShapes == null || allPluginShapes.Equals(""))
                 continue;
             foreach (var shapes in allPluginShapes.Split(';')) {
@@ -70,10 +71,11 @@ public class FaceDetector : MonoBehaviour {
                     var attrs = shape.Split(',');
                     switch (attrs[0]) {
                         case "rectangle":
-                            var x = attrs[1];
-                            var y = attrs[2];
-                            var width = attrs[3];
-                            var height = attrs[4];
+                            var x = float.Parse(attrs[1], CultureInfo.InvariantCulture.NumberFormat);
+                            var y = float.Parse(attrs[2], CultureInfo.InvariantCulture.NumberFormat);
+                            var width = float.Parse(attrs[3], CultureInfo.InvariantCulture.NumberFormat);
+                            var height = float.Parse(attrs[4], CultureInfo.InvariantCulture.NumberFormat);
+                            addRoundObjectToFace(model.x, model.y, 0, x, y, width, height);
                             // TODO draw 
                             break;
                         case "text":
