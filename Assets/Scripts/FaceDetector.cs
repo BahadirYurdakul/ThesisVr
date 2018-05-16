@@ -20,8 +20,6 @@ public class FaceDetector : MonoBehaviour {
 
     public GameObject g;
 
-    private List<FrameWithCameraAngleModel> l = new List<FrameWithCameraAngleModel>();
-
     private int w;
     private int h;
 
@@ -61,24 +59,35 @@ public class FaceDetector : MonoBehaviour {
         //Debug.Log("Main camera angle is x: " + mainCamera.transform.eulerAngles.x + "  y: " + mainCamera.transform.eulerAngles.y + " z: " + mainCamera.transform.eulerAngles.z);
 
         framec++;
-        int frameId = framec / 30;
-        
-        foreach (var frameWithCameraAngleModel in frameWithCameraAngleList) {
-            string shape = frameDist.CallStatic<string>("getFrameShapes", frameId);
-            // draw
-            //Debug.Log("shape received: " + shape);
-            string[] tokens;
-            if (shape != null && !shape.Equals(""))
-            {
-                Debug.Log("shape received: " + shape);
-                tokens = shape.Split(',');
+        var frameId = framec / 30;
+
+        foreach (var model in frameWithCameraAngleList) {
+            var allPluginShapes = frameDist.CallStatic<string>("getFrameShapes", frameId);
+            if (allPluginShapes == null || allPluginShapes.Equals(""))
+                continue;
+            foreach (var shapes in allPluginShapes.Split(';')) {
+                foreach (var shape in shapes.Split(':')) {
+                    var attrs = shape.Split(',');
+                    switch (attrs[0]) {
+                        case "rectangle":
+                            var x = attrs[1];
+                            var y = attrs[2];
+                            var width = attrs[3];
+                            var height = attrs[4];
+                            // TODO draw 
+                            break;
+                        case "text":
+                            break;
+                        default:
+                            continue;
+                    }
+                }
             }
         }
 
         //Screen.dpi;
 
         if (framec % 30 == 0)
-            // TODO record current camera angle and frameId
             StartCoroutine(Detect(frameId));
 
         // Camera.main.transform.rotation
@@ -125,24 +134,24 @@ public class FaceDetector : MonoBehaviour {
 
         yield return null;
 
+        var eulerAngles = mainCamera.transform.eulerAngles;
+        frameWithCameraAngleList.Add(new FrameWithCameraAngleModel(eulerAngles.x, eulerAngles.y, frameId));
+
         using (var mat = new AndroidJavaObject("org.opencv.core.MatOfByte", texture.EncodeToJPG(70))) {
-            var eulerAngles = mainCamera.transform.eulerAngles;
-            frameWithCameraAngleList.Add(new FrameWithCameraAngleModel(eulerAngles.x, eulerAngles.y, frameId));
             frameDist.CallStatic("distribute", frameId, mat);
         }
 
         yield return null;
-        
+
         Debug.Log("\nelapsed render camera: " + ms + "ms\n" +
                   "elapsed switch textures: " + (ms2 - ms) + "ms\n" +
                   "elapsed read pixels: " + (ms3 - ms2) + "ms\n" +
                   "elapsed switch textures and apply: " + (ms4 - ms3) + "ms\n" +
                   "elapsed total: " + sw.ElapsedMilliseconds + "ms");
-        
     }
 
-    private void addRoundObjectToFace(float rotationX, float rotationY, float rotationZ, float posX, float posY, float width, float height)
-    {
+    private void addRoundObjectToFace(float rotationX, float rotationY, float rotationZ, float posX, float posY,
+        float width, float height) {
         float normalizedPositionX = posX * 4 / Screen.width;
         float normalizedPositionY = posY * 4 / Screen.height;
         float normalizedWidth = width * 4 / Screen.width;
@@ -155,7 +164,8 @@ public class FaceDetector : MonoBehaviour {
         normalizedPositionX += newRoundObject.transform.position.x;
         normalizedPositionY += newRoundObject.transform.position.y;
         Debug.Log("Pos x: " + newRoundObject.transform.position.x + ", Pos y: " + newRoundObject.transform.position.y);
-        newRoundObject.transform.position = new Vector3(normalizedPositionX, normalizedPositionY, newRoundObject.transform.position.z);
+        newRoundObject.transform.position =
+            new Vector3(normalizedPositionX, normalizedPositionY, newRoundObject.transform.position.z);
         newRoundObject.transform.localScale = new Vector3(normalizedScale, normalizedScale, normalizedScale);
         AddRemoveParentHelper.Instance.SetParentObject(newRoundObject, container);
         locator.transform.Rotate(new Vector3(-rotationX, -rotationY, -rotationZ));
