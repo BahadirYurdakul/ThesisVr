@@ -66,6 +66,8 @@ public class FaceDetector : MonoBehaviour {
             var allPluginShapes = frameDist.CallStatic<string>("getFrameShapes", model.frameCount);
             if (allPluginShapes == null || allPluginShapes.Equals(""))
                 continue;
+            Debug.Log("shapes: " + allPluginShapes);
+
             foreach (var shapes in allPluginShapes.Split(';')) {
                 foreach (var shape in shapes.Split(':')) {
                     var attrs = shape.Split(',');
