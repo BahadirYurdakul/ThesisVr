@@ -155,14 +155,29 @@ public class FaceDetector : MonoBehaviour {
     }
 
     private void addRoundObjectToFace(float rotationX, float rotationY, float rotationZ, float posX, float posY,
-        float width, float height) {
+        float width, float height)
+    {
+
+        float initialX = -0.5f;
+        float initialY = 0.5f;
+
         float normalizedPositionX = posX * 4 / Screen.width;
-        float normalizedPositionY = posY * 4 / Screen.height;
+        float normalizedPositionY = -(posY * 4 / Screen.height);
+
+        normalizedPositionX += initialX;
+        normalizedPositionY += initialY;
+
         float normalizedWidth = width * 4 / Screen.width;
         float normalizedHeight = height * 4 / Screen.height;
         float normalizedScale = normalizedHeight > normalizedWidth ? normalizedHeight : normalizedWidth;
+        normalizedScale += 50;
 
-        //Debug.Log("Screen:" + Screen.width + "  , " + Screen.height);
+        Debug.Log("normalizedPositionX: " + normalizedPositionX +
+            ", normalizedPositionY: " + normalizedPositionY +
+            ", normalizedWidth: " + normalizedWidth +
+            ", normalizedHeight: " + normalizedHeight +
+            ", normalizedScale: " + normalizedScale
+            );
         var newRoundObject = AddRemoveParentHelper.Instance.InstantiatePrefab("FaceRoundPrefab", "newObject", locator);
         locator.transform.Rotate(new Vector3(rotationX, rotationY, rotationZ));
         normalizedPositionX += newRoundObject.transform.position.x;
