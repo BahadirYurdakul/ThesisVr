@@ -58,7 +58,6 @@ public class FaceDetector : MonoBehaviour {
     void Update() {
         //Debug.Log("Cam angle is x: " + cam.transform.eulerAngles.x + "  y: " + cam.transform.eulerAngles.y + " z: " + cam.transform.eulerAngles.z);
         //Debug.Log("Main camera angle is x: " + mainCamera.transform.eulerAngles.x + "  y: " + mainCamera.transform.eulerAngles.y + " z: " + mainCamera.transform.eulerAngles.z);
-
         framec++;
         var frameId = framec / 30;
 
@@ -77,7 +76,7 @@ public class FaceDetector : MonoBehaviour {
                             var y = float.Parse(attrs[2], CultureInfo.InvariantCulture.NumberFormat);
                             var width = float.Parse(attrs[3], CultureInfo.InvariantCulture.NumberFormat);
                             var height = float.Parse(attrs[4], CultureInfo.InvariantCulture.NumberFormat);
-                            addRoundObjectToFace(model.x, model.y, 0, x, y, width, height);
+                            //addRoundObjectToFace(model.x, model.y, 0, x, y, width, height);
                             // TODO draw 
                             break;
                         case "text":
@@ -182,7 +181,7 @@ public class FaceDetector : MonoBehaviour {
         locator.transform.Rotate(new Vector3(rotationX, rotationY, rotationZ));
         normalizedPositionX += newRoundObject.transform.position.x;
         normalizedPositionY += newRoundObject.transform.position.y;
-        Debug.Log("Pos x: " + newRoundObject.transform.position.x + ", Pos y: " + newRoundObject.transform.position.y);
+        //Debug.Log("Pos x: " + newRoundObject.transform.position.x + ", Pos y: " + newRoundObject.transform.position.y);
         newRoundObject.transform.position =
             new Vector3(normalizedPositionX, normalizedPositionY, newRoundObject.transform.position.z);
         newRoundObject.transform.localScale = new Vector3(normalizedScale, normalizedScale, normalizedScale);

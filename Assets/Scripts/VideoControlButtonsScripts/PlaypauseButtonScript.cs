@@ -3,13 +3,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlaypauseButtonScript : MonoBehaviour {
+public class PlaypauseButtonScript : MonoBehaviour
+{
 
     public float lookTime = 3f;
     private bool isLooking = false;
     private float timer = 0f;
     public GameObject MagnetButton;
     public Canvas VideoDisplayCanvas;
+    public GameObject FaceDetector;
 
     void OnDisable()
     {
@@ -24,15 +26,9 @@ public class PlaypauseButtonScript : MonoBehaviour {
     // Update is called once per frame
     void Update()
     {
-        if (isLooking)
+        if (MagnetButton.GetComponent<MagnetSensor>().isPressedMagnetButton || Input.GetKeyDown("Fire1"))
         {
-            if (MagnetButton.GetComponent<MagnetSensor>().isPressedMagnetButton)
-                CursorClick();
-            timer += Time.deltaTime;
-            if (timer >= lookTime)
-            {
-                CursorClick();
-            }
+            CursorClick();
         }
     }
 

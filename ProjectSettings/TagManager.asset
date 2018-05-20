@@ -9,6 +9,8 @@ TagManager:
   - Round
   - MagnetButton
   - VideoListMenu
+  - videoPlayerObjects
+  - FaceDetector
   layers:
   - Default
   - TransparentFX

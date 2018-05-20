@@ -16,6 +16,7 @@
         private Vector3 basePosition;
         private Text videoPosition;
         private Text videoDuration;
+        public GameObject FaceDetector;
 
         public GvrVideoPlayerTexture Player
         {
@@ -81,6 +82,8 @@
 
         void Start()
         {
+            FaceDetector = GameObject.FindGameObjectWithTag("FaceDetector");
+            FaceDetector.SetActive(false);
             foreach (ScrubberEvents s in GetComponentsInChildren<ScrubberEvents>(true))
             {
                 s.ControlManager = this;
@@ -163,10 +166,12 @@
             bool isPaused = Player.IsPaused;
             if (isPaused)
             {
+                FaceDetector.SetActive(false);
                 Player.Play();
             }
             else
             {
+                FaceDetector.SetActive(true);
                 Player.Pause();
             }
             pauseSprite.SetActive(isPaused);
