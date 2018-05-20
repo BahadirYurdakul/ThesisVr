@@ -1,11 +1,13 @@
 ﻿using UnityEngine;
 
 public class Frame {
-    public Quaternion CameraAngle { get; set; }
-    public int FrameCount { get; set; }
+    public Quaternion CameraRotation { get; set; }
+    public int Id { get; set; }
+    public bool IsDrawn { get; set; }
 
-    public Frame(int frameCount, Quaternion cameraAngle) {
-        CameraAngle = cameraAngle;
-        FrameCount = frameCount;
+    public Frame(int id, Quaternion cameraRotation) {
+        CameraRotation = cameraRotation;
+        Id = id;
+        IsDrawn = false;
     }
 }
