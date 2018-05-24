@@ -55,7 +55,7 @@ public class FrameDistributer : MonoBehaviour {
         }
 
         foreach (var t in texts) {
-            t.transform.LookAt(cam.transform);
+            t.transform.localRotation = Quaternion.LookRotation(cam.transform.forward);
         }
 
         var nearPlane = cam.nearClipPlane;
@@ -70,8 +70,8 @@ public class FrameDistributer : MonoBehaviour {
             foreach (var shapes in allPluginShapes.Split(';')) {
                 foreach (var shape in shapes.Split(':')) {
                     var attrs = shape.Split(',');
-                    var x = float.Parse(attrs[1], CultureInfo.InvariantCulture);
-                    var y = float.Parse(attrs[2], CultureInfo.InvariantCulture);
+                    var x = int.Parse(attrs[1], CultureInfo.InvariantCulture);
+                    var y = int.Parse(attrs[2], CultureInfo.InvariantCulture);
 
                     var originalRotation = cam.transform.localRotation;
                     cam.transform.localRotation = frame.CameraRotation;
@@ -80,8 +80,8 @@ public class FrameDistributer : MonoBehaviour {
                     Vector3 worldPoint;
                     switch (attrs[0]) {
                         case "rectangle":
-                            var width = float.Parse(attrs[3], CultureInfo.InvariantCulture);
-                            var height = float.Parse(attrs[4], CultureInfo.InvariantCulture);
+                            var width = int.Parse(attrs[3], CultureInfo.InvariantCulture);
+                            var height = int.Parse(attrs[4], CultureInfo.InvariantCulture);
 
                             worldPoint = cam.ScreenToWorldPoint(new Vector3(x + width / 2, _h - (y + height / 2),
                                 nearPlane + 1));
@@ -98,7 +98,7 @@ public class FrameDistributer : MonoBehaviour {
                             var text = attrs[3];
                             worldPoint = cam.ScreenToWorldPoint(new Vector3(x, _h - y, nearPlane + 1));
 
-                            if (texts.Any(r => Vector3.Distance(r.transform.position, worldPoint) < .2f))
+                            if (texts.Any(r => Vector3.Distance(r.transform.position, worldPoint) < .5f))
                                 break;
 
                             var textObj = Instantiate(textPrefab, worldPoint, lookRotation, container.transform);
