@@ -70,53 +70,6 @@ public class FrameDistributer : MonoBehaviour {
             foreach (var shapes in allPluginShapes.Split(';')) {
                 foreach (var shape in shapes.Split(':')) {
                     var attrs = shape.Split(',');
-                    switch (attrs[0]) {
-                        case "rectangle":
-                            var x = float.Parse(attrs[1], CultureInfo.InvariantCulture);
-                            var y = float.Parse(attrs[2], CultureInfo.InvariantCulture);
-                            var width = float.Parse(attrs[3], CultureInfo.InvariantCulture);
-                            var height = float.Parse(attrs[4], CultureInfo.InvariantCulture);
-
-                            var originalRotation = cam.transform.localRotation;
-                            cam.transform.localRotation = frame.CameraRotation;
-                            // todo fix
-                            var worldPoint =
-                                cam.ScreenToWorldPoint(new Vector3(x + width / 2, _h - (y + height / 2),
-                                    nearPlane + 1));
-
-                            if (rects.Any(r => Vector3.Distance(r.transform.position, worldPoint) < .5f))
-                                break;
-
-                            //log("creating rect", x, y, width, height, worldPoint);
-                            var rectObj = Instantiate(rectSprite, worldPoint,
-                                Quaternion.LookRotation(-cam.transform.forward));
-                            rectObj.transform.localScale = new Vector3(width / 100f, height / 100f, 1);
-                            AddRemoveParentHelper.Instance.SetParentObject(rectObj, container);
-                            rects.Add(rectObj);
-                            cam.transform.localRotation = originalRotation;
-                            break;
-                        case "text":
-                            break;
-                        default:
-                            continue;
-                    }
-                }
-            } /*
-        framec++;
-        var frameId = framec / 30;
-
-        var nearPlane = cam.nearClipPlane;
-        foreach (var frame in frames) {
-            if (frame.IsDrawn)
-                continue;
-
-            var allPluginShapes = frameDist.CallStatic<string>("getFrameShapes", frame.Id);
-            log("frame", frame.Id, "shapes:", allPluginShapes);
-            if (allPluginShapes == null || allPluginShapes.Equals(""))
-                continue;
-            foreach (var shapes in allPluginShapes.Split(';')) {
-                foreach (var shape in shapes.Split(':')) {
-                    var attrs = shape.Split(',');
                     var x = float.Parse(attrs[1], CultureInfo.InvariantCulture);
                     var y = float.Parse(attrs[2], CultureInfo.InvariantCulture);
 
@@ -129,12 +82,13 @@ public class FrameDistributer : MonoBehaviour {
                         case "rectangle":
                             var width = float.Parse(attrs[3], CultureInfo.InvariantCulture);
                             var height = float.Parse(attrs[4], CultureInfo.InvariantCulture);
+
                             worldPoint = cam.ScreenToWorldPoint(new Vector3(x + width / 2, _h - (y + height / 2),
-                                nearPlane));
+                                nearPlane + 1));
 
-                            if (rects.Any(r => Vector3.Distance(r.transform.position, worldPoint) < .2f))
+                            if (rects.Any(r => Vector3.Distance(r.transform.position, worldPoint) < .5f))
                                 break;
-
+                            
                             var rectObj = Instantiate(rectSprite, worldPoint, lookRotation);
                             rectObj.transform.localScale = new Vector3(width / 100f, height / 100f, 1);
                             AddRemoveParentHelper.Instance.SetParentObject(rectObj, container);
@@ -154,10 +108,9 @@ public class FrameDistributer : MonoBehaviour {
                         default:
                             continue;
                     }
-
                     cam.transform.localRotation = originalRotation;
                 }
-            }*/
+            }
 
             frame.IsDrawn = true;
         }
