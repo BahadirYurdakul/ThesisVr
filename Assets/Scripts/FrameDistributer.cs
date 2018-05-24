@@ -15,6 +15,7 @@ public class FrameDistributer : MonoBehaviour {
 
     private readonly List<Frame> frames = new List<Frame>();
     private readonly List<GameObject> rects = new List<GameObject>();
+    private readonly List<GameObject> texts = new List<GameObject>();
 
     private int _w;
     private int _h;
@@ -22,6 +23,7 @@ public class FrameDistributer : MonoBehaviour {
     private const int ResMult = 4;
 
     public GameObject rectSprite;
+    public GameObject textPrefab;
     public GameObject container;
     public Camera cam;
 
@@ -33,19 +35,28 @@ public class FrameDistributer : MonoBehaviour {
         rect = new Rect(0, 0, _w, _h);
         texture = new Texture2D(_w, _h, TextureFormat.RGB24, false);
         cam.targetTexture = rt;
-        log("starting detection");
 
         using (var jc = new AndroidJavaClass("com.unity3d.player.UnityPlayer")) {
             context = jc.GetStatic<AndroidJavaObject>("currentActivity");
             frameDist = new AndroidJavaClass("tr.edu.iyte.vrxd.unityhook.FrameDistributer");
             frameDist.CallStatic<bool>("loadPlugins", context);
         }
+
+        log("starting detection");
     }
 
     // Update is called once per frame
     void Update() {
         framec++;
         var frameId = framec / 30;
+
+        foreach (var r in rects) {
+            r.transform.LookAt(cam.transform);
+        }
+
+        foreach (var t in texts) {
+            t.transform.LookAt(cam.transform);
+        }
 
         var nearPlane = cam.nearClipPlane;
         foreach (var frame in frames) {
@@ -55,7 +66,7 @@ public class FrameDistributer : MonoBehaviour {
             var allPluginShapes = frameDist.CallStatic<string>("getFrameShapes", frame.Id);
             if (allPluginShapes == null || allPluginShapes.Equals(""))
                 continue;
-            log("shapes:", allPluginShapes);
+            log("shapes:", frameId, allPluginShapes);
             foreach (var shapes in allPluginShapes.Split(';')) {
                 foreach (var shape in shapes.Split(':')) {
                     var attrs = shape.Split(',');
@@ -70,13 +81,18 @@ public class FrameDistributer : MonoBehaviour {
                             cam.transform.localRotation = frame.CameraRotation;
                             // todo fix
                             var worldPoint =
-                                cam.ScreenToWorldPoint(new Vector3(x + width / 2, _h - (y + height / 2), nearPlane + 1));
+                                cam.ScreenToWorldPoint(new Vector3(x + width / 2, _h - (y + height / 2),
+                                    nearPlane + 1));
 
-                            if (rects.Any(r => Vector3.Distance(r.transform.position, worldPoint) < .2f))
+                            if (rects.Any(r => Vector3.Distance(r.transform.position, worldPoint) < .5f))
                                 break;
 
-                            rects.Add(Instantiate(rectSprite, worldPoint,
-                                Quaternion.LookRotation(-cam.transform.forward), container.transform));
+                            //log("creating rect", x, y, width, height, worldPoint);
+                            var rectObj = Instantiate(rectSprite, worldPoint,
+                                Quaternion.LookRotation(-cam.transform.forward));
+                            rectObj.transform.localScale = new Vector3(width / 100f, height / 100f, 1);
+                            AddRemoveParentHelper.Instance.SetParentObject(rectObj, container);
+                            rects.Add(rectObj);
                             cam.transform.localRotation = originalRotation;
                             break;
                         case "text":
@@ -85,7 +101,63 @@ public class FrameDistributer : MonoBehaviour {
                             continue;
                     }
                 }
-            }
+            } /*
+        framec++;
+        var frameId = framec / 30;
+
+        var nearPlane = cam.nearClipPlane;
+        foreach (var frame in frames) {
+            if (frame.IsDrawn)
+                continue;
+
+            var allPluginShapes = frameDist.CallStatic<string>("getFrameShapes", frame.Id);
+            log("frame", frame.Id, "shapes:", allPluginShapes);
+            if (allPluginShapes == null || allPluginShapes.Equals(""))
+                continue;
+            foreach (var shapes in allPluginShapes.Split(';')) {
+                foreach (var shape in shapes.Split(':')) {
+                    var attrs = shape.Split(',');
+                    var x = float.Parse(attrs[1], CultureInfo.InvariantCulture);
+                    var y = float.Parse(attrs[2], CultureInfo.InvariantCulture);
+
+                    var originalRotation = cam.transform.localRotation;
+                    cam.transform.localRotation = frame.CameraRotation;
+                    var lookRotation = Quaternion.LookRotation(-cam.transform.forward);
+
+                    Vector3 worldPoint;
+                    switch (attrs[0]) {
+                        case "rectangle":
+                            var width = float.Parse(attrs[3], CultureInfo.InvariantCulture);
+                            var height = float.Parse(attrs[4], CultureInfo.InvariantCulture);
+                            worldPoint = cam.ScreenToWorldPoint(new Vector3(x + width / 2, _h - (y + height / 2),
+                                nearPlane));
+
+                            if (rects.Any(r => Vector3.Distance(r.transform.position, worldPoint) < .2f))
+                                break;
+
+                            var rectObj = Instantiate(rectSprite, worldPoint, lookRotation);
+                            rectObj.transform.localScale = new Vector3(width / 100f, height / 100f, 1);
+                            AddRemoveParentHelper.Instance.SetParentObject(rectObj, container);
+                            rects.Add(rectObj);
+                            break;
+                        case "text":
+                            var text = attrs[3];
+                            worldPoint = cam.ScreenToWorldPoint(new Vector3(x, _h - y, nearPlane + 1));
+
+                            if (texts.Any(r => Vector3.Distance(r.transform.position, worldPoint) < .2f))
+                                break;
+
+                            var textObj = Instantiate(textPrefab, worldPoint, lookRotation, container.transform);
+                            textObj.GetComponent<TextMesh>().text = text;
+                            texts.Add(textObj);
+                            break;
+                        default:
+                            continue;
+                    }
+
+                    cam.transform.localRotation = originalRotation;
+                }
+            }*/
 
             frame.IsDrawn = true;
         }
@@ -96,6 +168,8 @@ public class FrameDistributer : MonoBehaviour {
 
     void OnDisable() {
         log("Disabled....");
+        rects.Clear();
+        texts.Clear();
         AddRemoveParentHelper.Instance.ClearGameObjectChildren(container);
     }
 
@@ -103,7 +177,7 @@ public class FrameDistributer : MonoBehaviour {
         var s = "";
         foreach (var t in objs)
             s += t + " ";
-        Debug.Log(s);
+        frameDist.CallStatic("log", s);
     }
 
     IEnumerator Detect(int frameId) {
