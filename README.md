@@ -7,4 +7,4 @@ Then user can select video room to watch the video and watch the 360-degrees vid
 
 The project supports integration of external api such as face recognition api (https://github.com/emrsmsrli/VRXDFaceRecognition) via unity hooks api (https://github.com/emrsmsrli/VRXDPluginAPI).
 External api can draw texture and supported assets to the screen.
-For example, face recognition api writes details of every recognized person on the video screen at a time by using unity hooks api.
+For example, face recognition api writes details of every recognized person on the video screen at a time thanks to unity hooks api.
